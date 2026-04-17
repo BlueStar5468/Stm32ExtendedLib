@@ -165,9 +165,9 @@ uint16_t Tim::GetAutoReload()
 /// @brief 获取指定的标志位的状态
 /// @param flag 要获取的标志位
 /// @return 标志位的状态
-FlagStatus Tim::GetFlagStatus(Configs::Flags flag)
+bool Tim::GetFlagStatus(Configs::Flags flag)
 {
-    return TIM_GetFlagStatus(self, static_cast<uint16_t>(flag));
+    return TIM_GetFlagStatus(self, static_cast<uint16_t>(flag)) == SET;
 }
 
 /// @brief 清除指定的标志位
@@ -180,9 +180,9 @@ void Tim::ClearFlag(Configs::Flags flag)
 /// @brief 获取指定的中断状态
 /// @param it 要获取的中断模式
 /// @return 中断状态
-ITStatus Tim::GetITStatus(Configs::ITMode it)
+bool Tim::GetITStatus(Configs::ITMode it)
 {
-    return TIM_GetITStatus(self, static_cast<uint16_t>(it));
+    return TIM_GetITStatus(self, static_cast<uint16_t>(it)) == SET;
 }
 
 /// @brief 清除指定的中断挂起位

@@ -155,9 +155,9 @@ public:
 
     //标志位相关函数
 
-    FlagStatus GetFlagStatus(Configs::Flags flag);
+    bool GetFlagStatus(Configs::Flags flag);
     void ClearFlag(Configs::Flags flag);
-    ITStatus GetITStatus(Configs::ITMode it);
+    bool GetITStatus(Configs::ITMode it);
     void ClearITPendingBit(Configs::ITMode it);
 
     //时钟控制
