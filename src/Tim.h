@@ -1,7 +1,7 @@
 /*
-BSExtended Stm32 lib
-Copyright (C) 2025 BlueStar5468
-All rights reserved.
+BS-Stm32 Extended lib
+Copyright (C) 2026 BlueStar5468
+SPDX-License-Identifier: GPL-3.0-only
 */
 #ifndef __TIM_H__
 #define __TIM_H__
@@ -29,117 +29,123 @@ public:
     /// @param DISABLE - 禁用计时器
     typedef FunctionalState State;
 
-    /*
-    中断模式表
-    */
-    typedef enum ITMode
+    struct Configs
     {
-        Update = TIM_IT_Update, //更新中断
-        CC1 = TIM_IT_CC1, //捕获/比较1中断
-        CC2 = TIM_IT_CC2, //捕获/比较2中断
-        CC3 = TIM_IT_CC3, //捕获/比较3中断
-        CC4 = TIM_IT_CC4, //捕获/比较4中断
-        COM = TIM_IT_COM, //通信中断
-        Trigger = TIM_IT_Trigger, //触发中断
-        Break = TIM_IT_Break, //死区中断
-    } ITMode;
+        /*
+        中断模式表
+        */
+        typedef enum ITMode
+        {
+            Update = TIM_IT_Update, //更新中断
+            CC1 = TIM_IT_CC1, //捕获/比较1中断
+            CC2 = TIM_IT_CC2, //捕获/比较2中断
+            CC3 = TIM_IT_CC3, //捕获/比较3中断
+            CC4 = TIM_IT_CC4, //捕获/比较4中断
+            COM = TIM_IT_COM, //通信中断
+            Trigger = TIM_IT_Trigger, //触发中断
+            Break = TIM_IT_Break, //死区中断
+        } ITMode;
 
-    /*
-    时钟模式表
-    */
-    typedef enum TIMClockMode
-    {
-        InternalClock,      //内部时钟
-        ExternalClockMode1, //外部时钟模式1
-        ExternalClockMode2, //外部时钟模式2
-        OtherTIM,           //其他定时器作为时钟输入(级联模式)
-        TIxClock,           //TIx作为时钟输入
-    } TIMClockMode;
+        /*
+        时钟模式表
+        */
+        typedef enum TIMClockMode
+        {
+            InternalClock,      //内部时钟
+            ExternalClockMode1, //外部时钟模式1
+            ExternalClockMode2, //外部时钟模式2
+            OtherTIM,           //其他定时器作为时钟输入(级联模式)
+            TIxClock,           //TIx作为时钟输入
+        } TIMClockMode;
 
-    //内部计时器触发器表
-    typedef enum InternalTrigger
-    {
-        IT0 = TIM_TS_ITR0, //内部触发器0
-        IT1 = TIM_TS_ITR1, //内部触发器1
-        IT2 = TIM_TS_ITR2, //内部触发器2
-        IT3 = TIM_TS_ITR3, //内部触发器3
-    } InternalTrigger;
+        //内部计时器触发器表
+        typedef enum InternalTrigger
+        {
+            IT0 = TIM_TS_ITR0, //内部触发器0
+            IT1 = TIM_TS_ITR1, //内部触发器1
+            IT2 = TIM_TS_ITR2, //内部触发器2
+            IT3 = TIM_TS_ITR3, //内部触发器3
+        } InternalTrigger;
 
-    //TIx通道表
-    typedef enum TIxChannel
-    {
-        TI1Edge = TIM_TIxExternalCLK1Source_TI1ED, //TI1通道边缘检测
-        TI1 = TIM_TIxExternalCLK1Source_TI1,       //TI1通道
-        TI2 = TIM_TIxExternalCLK1Source_TI2,       //TI2通道
-    } TIxChannel;
+        //TIx通道表
+        typedef enum TIxChannel
+        {
+            TI1Edge = TIM_TIxExternalCLK1Source_TI1ED, //TI1通道边缘检测
+            TI1 = TIM_TIxExternalCLK1Source_TI1,       //TI1通道
+            TI2 = TIM_TIxExternalCLK1Source_TI2,       //TI2通道
+        } TIxChannel;
 
-    //外部引脚极性
-    typedef enum Polarity
-    {
-        Rising = TIM_ICPolarity_Rising,   //上升沿触发
-        Falling = TIM_ICPolarity_Falling, //下降沿触发
-    } Polarity;
+        //外部引脚极性
+        typedef enum Polarity
+        {
+            Rising = TIM_ICPolarity_Rising,   //上升沿触发
+            Falling = TIM_ICPolarity_Falling, //下降沿触发
+        } Polarity;
 
-    //外部预分频器
-    typedef enum ExternalPrescaler
-    {
-        OFF = TIM_ExtTRGPSC_OFF, //不分频
-        Div2 = TIM_ExtTRGPSC_DIV2, //分频2
-        Div4 = TIM_ExtTRGPSC_DIV4, //分频4
-        Div8 = TIM_ExtTRGPSC_DIV8, //分频8
-    } ExternalPrescaler;
 
-    //计数器模式
-    typedef enum CounterMode
-    {
-        Up = TIM_CounterMode_Up, //向上计数
-        Down = TIM_CounterMode_Down, //向下计数
-        CenterAligned1 = TIM_CounterMode_CenterAligned1, //中心对齐模式1
-        CenterAligned2 = TIM_CounterMode_CenterAligned2, //中心对齐模式2
-        CenterAligned3 = TIM_CounterMode_CenterAligned3, //中心对齐模式3
-    } CounterMode;
+        //外部预分频器
+        typedef enum ExternalPrescaler
+        {
+            OFF = TIM_ExtTRGPSC_OFF, //不分频
+            Div2 = TIM_ExtTRGPSC_DIV2, //分频2
+            Div4 = TIM_ExtTRGPSC_DIV4, //分频4
+            Div8 = TIM_ExtTRGPSC_DIV8, //分频8
+        } ExternalPrescaler;
 
-    //PSC更新设置
-    typedef enum PSCReloadMode
-    {
-        Wait = TIM_PSCReloadMode_Update,            //计数器完成当前周期后更新PSC
-        Immediate = TIM_PSCReloadMode_Immediate,    //PSC立即更新,并重置计数器
-    } PSCReloadMode;
+        //计数器模式
+        typedef enum CounterMode
+        {
+            Up = TIM_CounterMode_Up, //向上计数
+            Down = TIM_CounterMode_Down, //向下计数
+            CenterAligned1 = TIM_CounterMode_CenterAligned1, //中心对齐模式1
+            CenterAligned2 = TIM_CounterMode_CenterAligned2, //中心对齐模式2
+            CenterAligned3 = TIM_CounterMode_CenterAligned3, //中心对齐模式3
+        } CounterMode;
 
-    //计时器标志位
-    typedef enum Flags
-    {
-        UpdateFlag = TIM_FLAG_Update,   //更新标志
-        CC1Flag = TIM_FLAG_CC1,         //捕获/比较1标志
-        CC2Flag = TIM_FLAG_CC2,         //捕获/比较2标志
-        CC3Flag = TIM_FLAG_CC3,         //捕获/比较3标志
-        CC4Flag = TIM_FLAG_CC4,         //捕获/比较4标志
-        COMFlag = TIM_FLAG_COM,         //通信标志
-        TriggerFlag = TIM_FLAG_Trigger, //触发标志
-        BreakFlag = TIM_FLAG_Break,     //死区标志
-    } Flags;
+        //PSC更新设置
+        typedef enum PSCReloadMode
+        {
+            Wait = TIM_PSCReloadMode_Update,            //计数器完成当前周期后更新PSC
+            Immediate = TIM_PSCReloadMode_Immediate,    //PSC立即更新,并重置计数器
+        } PSCReloadMode;
 
-    //滤波采样器分频
-    typedef enum ClockDivision
-    {
-        ClockDiv1 = TIM_CKD_DIV1, //不分频
-        ClockDiv2 = TIM_CKD_DIV2, //分频2
-        ClockDiv4 = TIM_CKD_DIV4, //分频4
-    } ClockDivision;
+        //计时器标志位
+        typedef enum Flags
+        {
+            UpdateFlag = TIM_FLAG_Update,   //更新标志
+            CC1Flag = TIM_FLAG_CC1,         //捕获/比较1标志
+            CC2Flag = TIM_FLAG_CC2,         //捕获/比较2标志
+            CC3Flag = TIM_FLAG_CC3,         //捕获/比较3标志
+            CC4Flag = TIM_FLAG_CC4,         //捕获/比较4标志
+            COMFlag = TIM_FLAG_COM,         //通信标志
+            TriggerFlag = TIM_FLAG_Trigger, //触发标志
+            BreakFlag = TIM_FLAG_Break,     //死区标志
+        } Flags;
+
+        //滤波采样器分频
+        typedef enum ClockDivision
+        {
+            ClockDiv1 = TIM_CKD_DIV1, //不分频
+            ClockDiv2 = TIM_CKD_DIV2, //分频2
+            ClockDiv4 = TIM_CKD_DIV4, //分频4
+        } ClockDivision;
+
+    };
 
     //对象硬件地址
     TIM_TypeDef* self;
+
     /// @brief 计时器对象的构造函数
     Tim(TIM_TypeDef* timDef) : self(timDef) {}
 
     void DeInit();
     void TimeBaseInit(TimeBaseInitConfig* config);
-    TimeBaseInitConfig* GetDefaultTimeBaseInitConfig();
+    TimeBaseInitConfig GetDefaultTimeBaseInitConfig();
     void Switch(State state);
-    void InterruptSwitch(State state, ITMode it = ITMode::Update);
-    void SetClockMode(TIMClockMode mode, InternalTrigger trigger = IT0, ExternalPrescaler extPrescaler = OFF, TIxChannel tixChannel = TI1, Polarity polarity = Rising, uint16_t tixFilter = 0);
-    void SetPrescaler(uint16_t prescaler, PSCReloadMode reloadMode = Wait);
-    void SetCounterMode(CounterMode mode);
+    void InterruptSwitch(State state, Configs::ITMode it = Configs::ITMode::Update);
+    void SetClockMode(Configs::TIMClockMode mode, Configs::InternalTrigger trigger = Configs::InternalTrigger::IT0, Configs::ExternalPrescaler extPrescaler = Configs::ExternalPrescaler::OFF, Configs::TIxChannel tixChannel = Configs::TIxChannel::TI1, Configs::Polarity polarity = Configs::Polarity::Rising, uint16_t tixFilter = 0);
+    void SetPrescaler(uint16_t prescaler, Configs::PSCReloadMode reloadMode = Configs::PSCReloadMode::Wait);
+    void SetCounterMode(Configs::CounterMode mode);
     void ARReloadConfig(State state);
     void SetCounter(uint16_t counter);
     void SetAutoReload(uint16_t autoReload);
@@ -147,12 +153,24 @@ public:
     uint16_t GetPrescaler();
     uint16_t GetAutoReload();
 
-    FlagStatus GetFlagStatus(Flags flag);
-    void ClearFlag(Flags flag);
-    ITStatus GetITStatus(ITMode it);
-    void ClearITPendingBit(ITMode it);
+    //标志位相关函数
+
+    FlagStatus GetFlagStatus(Configs::Flags flag);
+    void ClearFlag(Configs::Flags flag);
+    ITStatus GetITStatus(Configs::ITMode it);
+    void ClearITPendingBit(Configs::ITMode it);
+
+    //时钟控制
 
     void PeripheralClockControl(State state);
+
+    //傻瓜配置函数
+
+    /// @brief 我是懒狗(bushi 这个结构体里的函数可以让你用最简单的方式配置计时器!
+    struct Foolish
+    {
+        void Start(Tim tim, uint16_t seconds);
+    };
 };
 
 /*
