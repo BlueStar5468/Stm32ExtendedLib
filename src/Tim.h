@@ -13,6 +13,11 @@ SPDX-License-Identifier: GPL-3.0-only
 //高级计时器(APB2):TIM1, TIM8
 //通用计时器(APB1):TIM2, TIM3, TIM4, TIM5
 //基本计时器(APB1):TIM6, TIM7
+/// @note 计时器初始化基本步骤:
+/// @note 1.使能计时器的外设时钟
+/// @note 2.配置计时器的时基单元(计数周期和计数模式)
+/// @note 3.配置计时器的时钟模式(内部时钟/外部时钟/其他定时器/编码器模式等)
+/// @note 4.配置计时器的中断(可选)
 class Tim
 {
 public:
@@ -20,7 +25,7 @@ public:
     /// @param TIM_Prescaler - 计时器预分频器, 范围为0x0000到0xFFFF
     /// @param TIM_CounterMode - 计数器模式
     /// @param TIM_Period - 自动重装载值, 范围为0,达到此值即触发更新.
-    /// @param TIM_ClockDivision - 时钟分频(用于滤波器采样时钟,基础频率为72MHz)
+    /// @param TIM_ClockDivision - 时钟分频(用于滤波器采样时钟,基础频率为72MHz) 使用Tim::Configs::ClockDivision枚举
     /// @param TIM_RepetitionCounter - 重复计数器值, 范围为0x00到0xFF(只适用于高级计时器TIM1和TIM8)
     /// @note 计时器周期可由 ((重装值 + 1)/72MHz) * (预分频器值 + 1) 计算得出
     typedef TIM_TimeBaseInitTypeDef TimeBaseInitConfig;
@@ -136,7 +141,7 @@ public:
     TIM_TypeDef* self;
 
     /// @brief 计时器对象的构造函数
-    Tim(TIM_TypeDef* timDef) : self(timDef) {}
+    Tim(TIM_TypeDef* timDef) : self(timDef), OC(timDef) {}
 
     void DeInit();
     void TimeBaseInit(TimeBaseInitConfig* config);
@@ -169,8 +174,52 @@ public:
     /// @brief 我是懒狗(bushi 这个结构体里的函数可以让你用最简单的方式配置计时器!
     struct Foolish
     {
-        void Start(Tim tim, uint16_t seconds);
+        static void Start(Tim tim, uint16_t seconds);
     };
+
+    // 输出比较部分
+    /// @note 此部分为动态结构体,需要使用对象调用
+    /// @note PWM频率:CK_PSC / (PSC + 1) / (ARR + 1)  ; PSC - 预分频器 
+    /// @note PWM占空比:CCR / (ARR + 1) 
+    /// @note PWM步长(百分比) : 1 / (ARR + 1)
+    /// @note 对于高级定时器 使用PWM需要调用EnablePWMOutput函数使能PWM输出
+    struct OutputCompare
+    {
+        //初始化结构体
+        /// @param TIM_OCMode - 输出比较模式
+        /// @param TIM_OutputState - 输出比较状态
+        typedef TIM_OCInitTypeDef InitConfig;
+        //硬件地址
+        TIM_TypeDef* self;
+        //构造函数
+        OutputCompare(TIM_TypeDef* timDef) : self(timDef) {}
+        //输出比较模式表
+        typedef enum OCMode
+        {
+            Frozen = TIM_OCMode_Timing,         //冻结模式 CNT与CCR无关 保持输出
+            Active = TIM_OCMode_Active,         //CNT=CCR时 输出高电平
+            Inactive = TIM_OCMode_Inactive,     //CNT=CCR时 输出低电平
+            Toggle = TIM_OCMode_Toggle,         //CNT与CCR匹配时 翻转输出
+            PWM1 = TIM_OCMode_PWM1,             //PWM模式1: 向上计数时 CNT < CCR时输出高电平 否则输出低电平; 向下计数时 CNT > CCR时输出高电平 否则输出低电平
+            PWM2 = TIM_OCMode_PWM2,             //PWM模式2: 向上计数时 CNT > CCR时输出高电平 否则输出低电平; 向下计数时 CNT < CCR时输出高电平 否则输出低电平
+            ForcedActive = TIM_ForcedAction_Active,   //强制输出高电平
+            ForcedInactive = TIM_ForcedAction_InActive, //强制输出低电平
+        } OCMode;
+
+        void Init(uint16_t Pluse, bool Polarity, bool NPolarity, OCMode mode, bool isEnabled, bool isNEnabled, uint8_t channel);
+        void Init(InitConfig* config, uint8_t channel);
+        void ForcedOutput(uint8_t channel, bool isActive);
+        void PreloadConfig(uint8_t channel, bool isEnabled);
+        void SetOutputPolarity(uint8_t channel, bool isToggled);
+        void SetNOutputPolarity(uint8_t channel, bool isToggled);
+        void SetOutputState(uint8_t channel, bool isEnabled);
+        void SetNOutputState(uint8_t channel, bool isEnabled);
+        void EnablePWMOutput(bool isEnabled);
+        void SetOCMode(uint8_t channel, OCMode mode);
+        void SetCCR(uint8_t channel, uint16_t ccr);
+        InitConfig GetDefaultInitConfig();
+    } OC;
+
 };
 
 /*

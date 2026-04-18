@@ -298,6 +298,178 @@ void Tim::Foolish::Start(Tim tim, uint16_t seconds)
     tim.Switch(Tim::State::ENABLE); //启动TIM2
 }
 
+/// @brief 通过参数初始化OC通道
+/// @param Pluse CCR寄存器的值(必须在0x0000到0xFFFF之间)
+/// @param Polarity 正向通道输出 true高电平 false低电平
+/// @param NPolarity 反向通道输出(仅高级定时器支持) true高电平 false低电平
+/// @param mode OC的模式
+/// @param isEnabled 是否启用正向通道
+/// @param isNEnabled 是否启用反向通道(仅高级定时器支持)
+/// @param channel 要初始化的OC通道(每个定时器有4个1-4)
+/// @note 以上配置不一定对所有定时器都适用,请根据实际情况调整参数以避免不可预期的行为
+void Tim::OutputCompare::Init(uint16_t Pluse, bool Polarity, bool NPolarity, OCMode mode, bool isEnabled, bool isNEnabled, uint8_t channel)
+{
+    //获取默认的配置
+    Tim::OutputCompare::InitConfig config;
+    config = GetDefaultInitConfig();
+
+    config.TIM_OCMode = static_cast<uint16_t>(mode);
+    config.TIM_OCPolarity = (Polarity) ? TIM_OCPolarity_High : TIM_OCPolarity_Low;
+    config.TIM_OCNPolarity = (NPolarity) ? TIM_OCNPolarity_High : TIM_OCNPolarity_Low;
+    config.TIM_OutputState = (isEnabled) ? TIM_OutputState_Enable : TIM_OutputState_Disable;
+    config.TIM_OutputNState = (isNEnabled) ? TIM_OutputNState_Enable : TIM_OutputNState_Disable;
+    config.TIM_Pulse = Pluse;
+
+    switch (channel)
+    {
+    case 1:TIM_OC1Init(self, &config);break;
+    case 2:TIM_OC2Init(self, &config);break;
+    case 3:TIM_OC3Init(self, &config);break;
+    case 4:TIM_OC4Init(self, &config);break;
+    }
+}
+
+/// @brief 通过初始化结构体初始化OC通道
+/// @param config 初始化结构体
+/// @param channel 需要初始化的通道(1-4)
+/// @note 在使用高级定时器时,确保config结构体的所有函数均有值,否则可能会导致不可预期的行为
+/// @note 不推荐自建结构体,可使用函数GetDefaultOCInitConfig()获取一个默认配置的结构体,然后修改其中的成员来满足需求
+void Tim::OutputCompare::Init(InitConfig* config, uint8_t channel)
+{
+    switch (channel)
+    {
+    case 1:TIM_OC1Init(self, config);break;
+    case 2:TIM_OC2Init(self, config);break;
+    case 3:TIM_OC3Init(self, config);break;
+    case 4:TIM_OC4Init(self, config);break;
+    }
+}
+
+/// @brief 设置通道的强制输出状态
+/// @param isActive true强制输出高电平 false强制输出低电平
+void Tim::OutputCompare::ForcedOutput(uint8_t channel, bool isActive)
+{
+    switch (channel)
+    {
+    case 1: TIM_ForcedOC1Config(self, (isActive) ? TIM_ForcedAction_Active : TIM_ForcedAction_InActive); break;
+    case 2: TIM_ForcedOC2Config(self, (isActive) ? TIM_ForcedAction_Active : TIM_ForcedAction_InActive); break;
+    case 3: TIM_ForcedOC3Config(self, (isActive) ? TIM_ForcedAction_Active : TIM_ForcedAction_InActive); break;
+    case 4: TIM_ForcedOC4Config(self, (isActive) ? TIM_ForcedAction_Active : TIM_ForcedAction_InActive); break;
+    }
+}
+
+/// @brief 是否启用OCR寄存器的预装载(是否启用OCR的影子寄存器)
+/// @param isEnabled true启用 false失能
+void Tim::OutputCompare::PreloadConfig(uint8_t channel, bool isEnabled)
+{
+    switch (channel)
+    {
+    case 1: TIM_OC1PreloadConfig(self, (isEnabled) ? TIM_OCPreload_Enable : TIM_OCPreload_Disable); break;
+    case 2: TIM_OC2PreloadConfig(self, (isEnabled) ? TIM_OCPreload_Enable : TIM_OCPreload_Disable); break;
+    case 3: TIM_OC3PreloadConfig(self, (isEnabled) ? TIM_OCPreload_Enable : TIM_OCPreload_Disable); break;
+    case 4: TIM_OC4PreloadConfig(self, (isEnabled) ? TIM_OCPreload_Enable : TIM_OCPreload_Disable); break;
+    }
+}
+
+/// @brief 设置通道的输出极性
+/// @param channel 要设置的通道
+/// @param isToggled 是否反转输出极性 true反转 false不反转
+void Tim::OutputCompare::SetOutputPolarity(uint8_t channel, bool isToggled)
+{
+    switch (channel)
+    {
+    case 1: TIM_OC1PolarityConfig(self, (isToggled) ? TIM_OCPolarity_Low : TIM_OCPolarity_High); break;
+    case 2: TIM_OC2PolarityConfig(self, (isToggled) ? TIM_OCPolarity_Low : TIM_OCPolarity_High); break;
+    case 3: TIM_OC3PolarityConfig(self, (isToggled) ? TIM_OCPolarity_Low : TIM_OCPolarity_High); break;
+    case 4: TIM_OC4PolarityConfig(self, (isToggled) ? TIM_OCPolarity_Low : TIM_OCPolarity_High); break;
+    }
+}
+
+
+/// @brief 设置反向通道的输出极性
+/// @param channel 要设置的通道(1-3) 反向通道只有1-3有 4没有
+/// @param isToggled 是否反转输出极性 true反转 false不反转
+void Tim::OutputCompare::SetNOutputPolarity(uint8_t channel, bool isToggled)
+{
+    switch (channel)
+    {
+    case 1: TIM_OC1NPolarityConfig(self, (isToggled) ? TIM_OCPolarity_Low : TIM_OCPolarity_High); break;
+    case 2: TIM_OC2NPolarityConfig(self, (isToggled) ? TIM_OCPolarity_Low : TIM_OCPolarity_High); break;
+    case 3: TIM_OC3NPolarityConfig(self, (isToggled) ? TIM_OCPolarity_Low : TIM_OCPolarity_High); break;
+    }
+}
+
+/// @brief 设置目标通道的输出比较是否启用
+/// @param channel 目标通道
+/// @param isEnabled 是否启用输出比较 true使能 false失能
+void Tim::OutputCompare::SetOutputState(uint8_t channel, bool isEnabled)
+{
+    if (self == TIM6 || self == TIM7) return; //基本定时器没有输出比较功能
+    switch (channel)
+    {
+    case 1: TIM_CCxCmd(self, TIM_Channel_1, (isEnabled) ? TIM_CCx_Enable : TIM_CCx_Disable); break;
+    case 2: TIM_CCxCmd(self, TIM_Channel_2, (isEnabled) ? TIM_CCx_Enable : TIM_CCx_Disable); break;
+    case 3: TIM_CCxCmd(self, TIM_Channel_3, (isEnabled) ? TIM_CCx_Enable : TIM_CCx_Disable); break;
+    case 4: TIM_CCxCmd(self, TIM_Channel_4, (isEnabled) ? TIM_CCx_Enable : TIM_CCx_Disable); break;
+    }
+}
+
+/// @brief 设置目标通道的反向输出比较是否启用
+/// @param channel 目标通道
+/// @param isEnabled 是否启用输出比较 true使能 false失能
+void Tim::OutputCompare::SetNOutputState(uint8_t channel, bool isEnabled)
+{
+    if (self == TIM6 || self == TIM7) return; //基本定时器没有输出比较功能
+    switch (channel)
+    {
+    case 1: TIM_CCxNCmd(self, TIM_Channel_1, (isEnabled) ? TIM_CCxN_Enable : TIM_CCxN_Disable); break;
+    case 2: TIM_CCxNCmd(self, TIM_Channel_2, (isEnabled) ? TIM_CCxN_Enable : TIM_CCxN_Disable); break;
+    case 3: TIM_CCxNCmd(self, TIM_Channel_3, (isEnabled) ? TIM_CCxN_Enable : TIM_CCxN_Disable); break;
+    }
+}
+
+/// @brief 启用高级定时器的PWM输出(通用定时器不许呀设置PWM输出功能,默认开启PWM输出)
+/// @param isEnabled 是否启用PWM输出 true启用 false失能
+/// @note 只有TIM1和TIM8需要调用这个函数来启用PWM输出,其他定时器不需要设置PWM输出功能
+/// @note 高级定时器:TIM1和TIM8 | TIM 15 16 17(本库不支持)
+void Tim::OutputCompare::EnablePWMOutput(bool isEnabled)
+{
+    TIM_CtrlPWMOutputs(self, (isEnabled) ? ENABLE : DISABLE);
+}
+
+/// @brief 用于设置输出比较模式的函数
+/// @param channel 要设置的通道
+/// @param mode 目标模式
+void Tim::OutputCompare::SetOCMode(uint8_t channel, OCMode mode)
+{
+    TIM_SelectOCxM(self, channel, static_cast<uint16_t>(mode));
+}
+
+/// @brief 设置CCR寄存器的值 从而改变PWM的占空比或输出比较的比较值
+/// @param channel 要设置的通道
+/// @param ccr CCR寄存器的值(必须在0x0000到0xFFFF之间)
+/// @note 对TIM6和TIM7无效 因为基本定时器没有输出比较功能
+void Tim::OutputCompare::SetCCR(uint8_t channel, uint16_t ccr)
+{
+    if (self == TIM6 || self == TIM7) return; //基本定时器没有输出比较功能
+    switch (channel)
+    {
+    case 1: TIM_SetCompare1(self, ccr); break;
+    case 2: TIM_SetCompare2(self, ccr); break;
+    case 3: TIM_SetCompare3(self, ccr); break;
+    case 4: TIM_SetCompare4(self, ccr); break;
+    }
+}
+
+/// @brief 获取一个默认配置的输出比较初始化结构体
+/// @return 默认配置的输出比较初始化结构体
+Tim::OutputCompare::InitConfig Tim::OutputCompare::GetDefaultInitConfig()
+{
+    InitConfig config;
+    TIM_OCStructInit(&config);
+    return config;
+}
+
 Tim TIM_1(TIM1); //APB2 高级定时器
 Tim TIM_2(TIM2); //APB1 通用定时器
 Tim TIM_3(TIM3); //APB1 通用定时器

@@ -17,6 +17,7 @@ SPDX-License-Identifier: GPL-3.0-only
 /// @note 链接图类似:
 /// @note GPIOA --16-> | AFIO | --16-> EXTI --Nvic::Channel-> NVIC
 /// @note GPIOB --16-> | AFIO |
+/// @note 如果要使用定时器等其他设备控制GPIO引脚 请将引脚配置为带有AF_的复用输出模式
 class Gpio
 {
 public:
@@ -97,6 +98,37 @@ public:
             Line14 = GPIO_PinSource14, //14号外部中断线
             Line15 = GPIO_PinSource15, //15号外部中断线
         } AFIOLine;
+
+        //重映射引脚
+        typedef enum RemapPin
+        {
+            CAN1_1 = GPIO_Remap1_CAN1, //CAN1重映射1
+            CAN1_2 = GPIO_Remap2_CAN1, //CAN1重映射2
+            TIM1_Partial = GPIO_PartialRemap_TIM1, //TIM1部分重映射
+            TIM2_Partial_1 = GPIO_PartialRemap1_TIM2, //TIM2部分重映射1
+            TIM2_Partial_2 = GPIO_PartialRemap2_TIM2, //TIM2部分重映射2
+            TIM3_Partial = GPIO_PartialRemap_TIM3, //TIM3部分重映射
+            TIM1_Full = GPIO_FullRemap_TIM1, //TIM1完全重映射
+            TIM2_Full = GPIO_FullRemap_TIM2, //TIM2完全重映射
+            TIM3_Full = GPIO_FullRemap_TIM3, //TIM3完全重映射
+            TIM4_Full = GPIO_Remap_TIM4, //TIM4完全重映射
+            USART1_Partial = GPIO_Remap_USART1, //USART1重映射
+            USART2_Partial = GPIO_Remap_USART2, //USART2重映射
+            USART3_Partial = GPIO_PartialRemap_USART3, //USART3部分重映射
+            USART3_Full = GPIO_FullRemap_USART3, //USART3完全重映射
+            I2C1_Partial = GPIO_Remap_I2C1, //I2C1重映射
+            TIM5CH4_Partial = GPIO_Remap_TIM5CH4_LSI, //TIM5通道4部分重映射
+            ADC1_ETRGINJ_Partial = GPIO_Remap_ADC1_ETRGINJ, //ADC1外部触发注入通道部分重映射
+            ADC1_ETRGREG_Partial = GPIO_Remap_ADC1_ETRGREG, //ADC1外部触发常规通道部分重映射
+            ADC2_ETRGINJ_Partial = GPIO_Remap_ADC2_ETRGINJ, //ADC2外部触发注入通道部分重映射
+            ADC2_ETRGREG_Partial = GPIO_Remap_ADC2_ETRGREG, //ADC2外部触发常规通道部分重映射
+            ADC1_ETRGINJ_Full = GPIO_Remap_ADC1_ETRGINJ, //ADC1外部触发注入通道完全重映射
+            ADC1_ETRGREG_Full = GPIO_Remap_ADC1_ETRGREG, //ADC1外部触发常规通道完全重映射
+            ADC2_ETRGINJ_Full = GPIO_Remap_ADC2_ETRGINJ, //ADC2外部触发注入通道完全重映射
+            ADC2_ETRGREG_Full = GPIO_Remap_ADC2_ETRGREG, //ADC2外部触发常规通道完全重映射
+            SWJ_JTAGDisable = GPIO_Remap_SWJ_JTAGDisable, //禁用JTAG功能 但保留SWD功能
+            SWJ_ALLDisable = GPIO_Remap_SWJ_Disable, //危险 禁用全部JTAG功能
+        } RemapPin;
     };
 
     //设备硬件地址
@@ -162,6 +194,14 @@ public:
         /// @brief AFIO时钟控制
         /// @param isEnabled 是否使能AFIO时钟
         static void ClockControl(bool isEnabled);
+        /// @brief 配置GPIO引脚的重映射功能
+        /// @param remapPin 需要重映射的引脚, 部分详见Config::RemapPin,如需更多 参考原始定义GPIO_Remap_xxx
+        /// @param isEnabled 是否启用重映射
+        /// @note 重映射功能会改变某些外设的默认引脚分配, 具体请参考芯片手册
+        /// @note 重映射完成之后请查看映射到的该引脚是否有被使用(非GPIO) 如果有 请考虑将其设置为GPIO 否则可能会出现功能冲突或无法使用该引脚的情况
+        /// @note 如果你在重映射JTAG引脚 请确保在使用前已经正确配置了SWD引脚以免失去对芯片的控制
+        /// @note 不要直接使用GPIO_Remap_SWJ_Disable关闭全部JTAG和SWD引脚 这将会使你无法通过常规方式重新编程芯片 需要使用特殊的烧录工具或进入特定的引导模式才能恢复
+        static void RemapPin(Config::RemapPin remapPin, bool isEnabled);
     };
 
     //快速中断操作
@@ -169,7 +209,7 @@ public:
     /// @brief 厌倦了一遍又一遍配置GPIO中断了吗?这个函数为你量身打造! 只需一步调用即可将所选引脚连接至一个优先级为(0,0)中断!
     /// @param pin 需要配置的引脚,详见Config::Pins(不可多选)
     /// @param isEnabled 是否使能该引脚的中断(默认为true)
-    /// @note 记得实现中断处理函数!
+    /// @note 记得实现中断处理函数! 在使用前需要启动GPIO的时钟,AFIO时钟会在函数中自动开启
     /// @note 函数会自动连接AFIO线路和EXTI线路并配置EXTI为上升沿触发的中断模式, 最后在NVIC中使能对应的中断通道(优先级为0, 0)
     void FastITControl(Config::Pins pin, bool isEnabled);
 

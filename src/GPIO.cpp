@@ -177,6 +177,11 @@ void Gpio::FastITControl(Config::Pins pin, bool isEnabled)
     nvic.ChannelControl(irqChannel, 0, 0, isEnabled);
 }
 
+void Gpio::Afio::RemapPin(Config::RemapPin remapPin, bool isEnabled)
+{
+    GPIO_PinRemapConfig(static_cast<uint32_t>(remapPin), isEnabled ? ENABLE : DISABLE);
+}
+
 
 //对象实例化
 Gpio gpioA(GPIOA);
