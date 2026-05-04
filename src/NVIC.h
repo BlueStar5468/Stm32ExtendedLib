@@ -122,8 +122,8 @@ public:
     /// @brief 设置NVIC的全局优先级分组方法(不建议运行时更改)
     /// @param priorityGroup 目标优先级分组方法
     void SetPriorityGrouping(Config::PriorityGroup priorityGroup);
-    /// @brief 获取一个默认的NVIC初始化结构体指针
-    /// @return 默认的NVIC初始化结构体指针
+    /// @brief 获取一个默认的NVIC初始化结构体
+    /// @return 默认的NVIC初始化结构体
     NvicConfig GetDefaltConfig();
     /// @brief 以NVIC初始化结构体操作指定的中断通道
     /// @param config NVIC初始化结构体指针, 其中NVIC_IRQChannel成员指定了需要操作的中断通道

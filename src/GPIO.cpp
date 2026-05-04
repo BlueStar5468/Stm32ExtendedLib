@@ -164,6 +164,7 @@ void Gpio::FastITControl(Config::Pins pin, bool isEnabled)
         case Gpio::Config::Pins::Pin2: irqChannel = EXTI2_IRQn; break;
         case Gpio::Config::Pins::Pin3: irqChannel = EXTI3_IRQn; break;
         case Gpio::Config::Pins::Pin4: irqChannel = EXTI4_IRQn; break;
+        default: return; //无效引脚
         }
     }
     else if (pin < Gpio::Config::Pins::Pin10)
