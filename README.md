@@ -5,6 +5,9 @@ A simple lib to encrease the Readability of Stm32 Standard Lib.Write in cpp.
 项目已更新至基于2021年版标准库以及ARM CMSIS 5.8.0构建，编译请使用ARMClang v6。
 理论可兼容更早的标准库以及支持cpp11的编译器。
 
+# Attention
+项目预计向更新的LL库迁移并完全移除标准库依赖，目前版本暂时弃用。
+
 # 许可证
 本项目包含以下组件：
 
