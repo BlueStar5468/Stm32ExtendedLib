@@ -4,78 +4,121 @@ Copyright (C) 2026 BlueStar5468
 SPDX-License-Identifier: GPL-3.0-only
 */
 
-#include "stm32f10x_gpio.h"
+#include "stm32f1xx_ll_gpio.h"
+#include "stm32f1xx_ll_bus.h"
 #include "GPIO.h"
 #include "EXTI.h"
 #include "NVIC.h"
 
 void Gpio::Init(Gpio::InitConfig* config)
 {
-    GPIO_Init(self, config);
+    LL_GPIO_InitTypeDef gpioConfig;
+    gpioConfig.Pin = config->Pin;
+    gpioConfig.Speed = config->Speed;
+    switch (config->Mode)
+    {
+    case Config::In::Mode::Floating:
+        gpioConfig.Mode = LL_GPIO_MODE_FLOATING;
+        break;
+    case Config::In::Mode::PullUp:
+        gpioConfig.Mode = LL_GPIO_MODE_INPUT;
+        gpioConfig.Pull = LL_GPIO_PULL_UP;
+        break;
+    case Config::In::Mode::PullDown:
+        gpioConfig.Mode = LL_GPIO_MODE_INPUT;
+        gpioConfig.Pull = LL_GPIO_PULL_DOWN;
+        break;
+    case Config::In::Mode::Analog:
+        gpioConfig.Mode = LL_GPIO_MODE_ANALOG;
+        break;
+    case Config::Out::Mode::PushPull:
+        gpioConfig.Mode = LL_GPIO_MODE_OUTPUT;
+        gpioConfig.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+        break;
+    case Config::Out::Mode::OpenDrain:
+        gpioConfig.Mode = LL_GPIO_MODE_OUTPUT;
+        gpioConfig.OutputType = LL_GPIO_OUTPUT_OPENDRAIN;
+        break;
+    case Config::Out::Mode::AltPushPull:
+        gpioConfig.Mode = LL_GPIO_MODE_ALTERNATE;
+        gpioConfig.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+        break;
+    case Config::Out::Mode::AltOpenDrain:
+        gpioConfig.Mode = LL_GPIO_MODE_ALTERNATE;
+        gpioConfig.OutputType = LL_GPIO_OUTPUT_OPENDRAIN;
+        break;
+    }
+    LL_GPIO_Init(self, &gpioConfig);
 }
 
-void Gpio::Init(Config::Pins pins, Config::Speed GPIO_Speed, uint32_t GPIO_Mode)
+void Gpio::Init(Config::Pins pins, Config::Speed GPIO_Speed, uint8_t GPIO_Mode)
 {
     InitConfig config;
-    config.GPIO_Pin = static_cast<uint16_t>(pins);
-    config.GPIO_Speed = static_cast<GPIOSpeed_TypeDef>(GPIO_Speed);
-    config.GPIO_Mode = static_cast<GPIOMode_TypeDef>(GPIO_Mode);
-    GPIO_Init(self, &config);
+    config.Pin = pins;
+    config.Speed = GPIO_Speed;
+    config.Mode = GPIO_Mode;
+    this->Init(&config);
 }
 
 void Gpio::DeInit()
 {
-    GPIO_DeInit(self);
+    LL_GPIO_DeInit(self);
 }
 
 void Gpio::OutPutControl(Config::Pins pins, bool state)
 {
     if (state)
     {
-        GPIO_SetBits(self, static_cast<uint16_t>(pins));
+        LL_GPIO_SetOutputPin(self, pins);
     }
     else
     {
-        GPIO_ResetBits(self, static_cast<uint16_t>(pins));
+        LL_GPIO_ResetOutputPin(self, pins);
     }
 }
 
-uint8_t Gpio::GetInputDataBit(Config::Pins pin)
+bool Gpio::GetInputDataBit(Config::Pins pin)
 {
-    return GPIO_ReadInputDataBit(self, static_cast<uint16_t>(pin));
+    return LL_GPIO_IsInputPinSet(self, pin);
 }
 
-uint8_t Gpio::GetOutputDataBit(Config::Pins pin)
+bool Gpio::GetOutputDataBit(Config::Pins pin)
 {
-    return GPIO_ReadOutputDataBit(self, static_cast<uint16_t>(pin));
+    return LL_GPIO_IsOutputPinSet(self, pin);
 }
 
 uint16_t Gpio::GetInputData()
 {
-    return GPIO_ReadInputData(self);
+    return LL_GPIO_ReadInputPort(self);
 }
 
 uint16_t Gpio::GetOutputData()
 {
-    return GPIO_ReadOutputData(self);
+    return LL_GPIO_ReadOutputPort(self);
 }
 
 void Gpio::PeripheralClockControl(bool isEnabled)
 {
-    //根据GPIO端口地址判断是哪个GPIO
     if (self == GPIOA)
     {
-        RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, isEnabled ? ENABLE : DISABLE);
+        LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOA);
     }
     else if (self == GPIOB)
     {
-        RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, isEnabled ? ENABLE : DISABLE);
+        LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOB);
     }
-}
-
-void Gpio::Afio::Deinit()
-{
-    GPIO_AFIODeInit();
+    else if (self == GPIOC)
+    {
+        LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOC);
+    }
+    else if (self == GPIOD)
+    {
+        LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOD);
+    }
+    else if (self == GPIOE)
+    {
+        LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOE);
+    }
 }
 
 void Gpio::Afio::Connect(Gpio gpio, Config::AFIOLine line)
@@ -83,23 +126,34 @@ void Gpio::Afio::Connect(Gpio gpio, Config::AFIOLine line)
     uint8_t source;
     if (gpio.self == GPIOA)
     {
-        source = GPIO_PortSourceGPIOA;
+        source = LL_GPIO_AF_EXTI_PORTA;
     }
     else if (gpio.self == GPIOB)
     {
-        source = GPIO_PortSourceGPIOB;
+        source = LL_GPIO_AF_EXTI_PORTB;
     }
-    else
+    else if (gpio.self == GPIOC)
     {
-        return; //无效GPIO
+        source = LL_GPIO_AF_EXTI_PORTC;
     }
-    GPIO_EXTILineConfig(source, static_cast<uint8_t>(line));
+    else if (gpio.self == GPIOD)
+    {
+        source = LL_GPIO_AF_EXTI_PORTD;
+    }
+    else if (gpio.self == GPIOE)
+    {
+        source = LL_GPIO_AF_EXTI_PORTE;
+    }
+    else return; //无效GPIO
+    LL_GPIO_AF_SetEXTISource(source, static_cast<uint8_t>(line));
 }
 
 void Gpio::Afio::ClockControl(bool isEnabled)
 {
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, isEnabled ? ENABLE : DISABLE);
-
+    if (isEnabled)
+        LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_AFIO);
+    else
+        LL_APB2_GRP1_DisableClock(LL_APB2_GRP1_PERIPH_AFIO);
 };
 
 void Gpio::FastITControl(Config::Pins pin, bool isEnabled)
@@ -154,7 +208,7 @@ void Gpio::FastITControl(Config::Pins pin, bool isEnabled)
     }
     exti.Init(extiLine, Exti::Config::Mode::Interrupt, Exti::Config::Trigger::Rising, isEnabled);
     //配置NVIC
-    uint8_t irqChannel;
+    IRQn_Type irqChannel;
     if (pin < Gpio::Config::Pins::Pin5)
     {
         switch (pin)
@@ -180,10 +234,126 @@ void Gpio::FastITControl(Config::Pins pin, bool isEnabled)
 
 void Gpio::Afio::RemapPin(Config::RemapPin remapPin, bool isEnabled)
 {
-    GPIO_PinRemapConfig(static_cast<uint32_t>(remapPin), isEnabled ? ENABLE : DISABLE);
+    if (isEnabled)
+    {
+        switch (remapPin)
+        {
+        case Config::RemapPin::CAN1_1:
+            LL_GPIO_AF_RemapPartial1_CAN1();
+            break;
+        case Config::RemapPin::CAN1_2:
+            LL_GPIO_AF_RemapPartial2_CAN1();
+            break;
+        case Config::RemapPin::I2C1_Partial:
+            LL_GPIO_AF_EnableRemap_I2C1();
+            break;
+        case Config::RemapPin::SWJ_ALLDisable:
+            LL_GPIO_AF_DisableRemap_SWJ();
+            break;
+        case Config::RemapPin::SWJ_JTAGDisable:
+            LL_GPIO_AF_Remap_SWJ_NOJTAG();
+            break;
+        case Config::RemapPin::TIM1_Full:
+            LL_GPIO_AF_EnableRemap_TIM1();
+            break;
+        case Config::RemapPin::TIM1_Partial:
+            LL_GPIO_AF_RemapPartial_TIM1();
+            break;
+        case Config::RemapPin::TIM2_Full:
+            LL_GPIO_AF_EnableRemap_TIM2();
+            break;
+        case Config::RemapPin::TIM2_Partial_1:
+            LL_GPIO_AF_RemapPartial1_TIM2();
+            break;
+        case Config::RemapPin::TIM2_Partial_2:
+            LL_GPIO_AF_RemapPartial2_TIM2();
+            break;
+        case Config::RemapPin::TIM3_Full:
+            LL_GPIO_AF_EnableRemap_TIM3();
+            break;
+        case Config::RemapPin::TIM3_Partial:
+            LL_GPIO_AF_RemapPartial_TIM3();
+            break;
+        case Config::RemapPin::TIM4_Full:
+            LL_GPIO_AF_EnableRemap_TIM4();
+            break;
+        case Config::RemapPin::USART1_Partial:
+            LL_GPIO_AF_EnableRemap_USART1();
+            break;
+        case Config::RemapPin::USART2_Partial:
+            LL_GPIO_AF_EnableRemap_USART2();
+            break;
+        case Config::RemapPin::USART3_Partial:
+            LL_GPIO_AF_RemapPartial_USART3();
+            break;
+        case Config::RemapPin::USART3_Full:
+            LL_GPIO_AF_EnableRemap_USART3();
+            break;
+        default: return; //无效重映射选项
+        }
+    }
+    else
+    {
+        switch (remapPin)
+        {
+        case Config::RemapPin::CAN1_1:
+            LL_GPIO_AF_RemapPartial1_CAN1();
+            break;
+        case Config::RemapPin::CAN1_2:
+            LL_GPIO_AF_RemapPartial2_CAN1();
+            break;
+        case Config::RemapPin::I2C1_Partial:
+            LL_GPIO_AF_DisableRemap_I2C1();
+            break;
+        case Config::RemapPin::SWJ_ALLDisable:
+        case Config::RemapPin::SWJ_JTAGDisable:
+            LL_GPIO_AF_EnableRemap_SWJ();
+            break;
+        case Config::RemapPin::TIM1_Full:
+            LL_GPIO_AF_DisableRemap_TIM1();
+            break;
+        case Config::RemapPin::TIM1_Partial:
+            LL_GPIO_AF_DisableRemap_TIM1();
+            break;
+        case Config::RemapPin::TIM2_Full:
+            LL_GPIO_AF_DisableRemap_TIM2();
+            break;
+        case Config::RemapPin::TIM2_Partial_1:
+            LL_GPIO_AF_DisableRemap_TIM2();
+            break;
+        case Config::RemapPin::TIM2_Partial_2:
+            LL_GPIO_AF_DisableRemap_TIM2();
+            break;
+        case Config::RemapPin::TIM3_Full:
+            LL_GPIO_AF_DisableRemap_TIM3();
+            break;
+        case Config::RemapPin::TIM3_Partial:
+            LL_GPIO_AF_DisableRemap_TIM3();
+            break;
+        case Config::RemapPin::TIM4_Full:
+            LL_GPIO_AF_DisableRemap_TIM4();
+            break;
+        case Config::RemapPin::USART1_Partial:
+            LL_GPIO_AF_DisableRemap_USART1();
+            break;
+        case Config::RemapPin::USART2_Partial:
+            LL_GPIO_AF_DisableRemap_USART2();
+            break;
+        case Config::RemapPin::USART3_Partial:
+            LL_GPIO_AF_DisableRemap_USART3();
+            break;
+        case Config::RemapPin::USART3_Full:
+            LL_GPIO_AF_DisableRemap_USART3();
+            break;
+        default: return; //无效重映射选项
+        }
+    }
 }
 
 
 //对象实例化
 Gpio gpioA(GPIOA);
 Gpio gpioB(GPIOB);
+Gpio gpioC(GPIOC);
+Gpio gpioD(GPIOD);
+Gpio gpioE(GPIOE);

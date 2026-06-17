@@ -4,62 +4,52 @@ Copyright (C) 2026 BlueStar5468
 SPDX-License-Identifier: GPL-3.0-only
 */
 
-#include "stm32f10x_exti.h"
+#include "stm32f1xx_ll_exti.h"
 #include "EXTI.h"
 
-EXTI_InitTypeDef Exti::GetDefaultInitConfig()
+LL_EXTI_InitTypeDef Exti::GetDefaultInitConfig()
 {
-    EXTI_InitTypeDef defaultConfig;
-    defaultConfig.EXTI_Line = 0;
-    defaultConfig.EXTI_Mode = EXTI_Mode_Interrupt;
-    defaultConfig.EXTI_Trigger = EXTI_Trigger_Rising;
-    defaultConfig.EXTI_LineCmd = DISABLE;
+    LL_EXTI_InitTypeDef defaultConfig;
+    defaultConfig.Line_0_31 = LL_EXTI_LINE_0;
+    defaultConfig.Mode = LL_EXTI_MODE_IT;
+    defaultConfig.Trigger = LL_EXTI_TRIGGER_RISING;
+    defaultConfig.LineCommand = DISABLE;
     return defaultConfig;
 }
 
 void Exti::DeInit()
 {
-    EXTI_DeInit();
+    LL_EXTI_DeInit();
 }
 
 void Exti::Init(Config::EXTILine line, Config::Mode mode, Config::Trigger trigger, bool isEnabled)
 {
-    EXTI_InitTypeDef config;
-    config.EXTI_Line = static_cast<uint32_t>(line);
-    config.EXTI_Mode = static_cast<EXTIMode_TypeDef>(mode);
-    config.EXTI_Trigger = static_cast<EXTITrigger_TypeDef>(trigger);
-    config.EXTI_LineCmd = isEnabled ? ENABLE : DISABLE;
-    EXTI_Init(&config);
+    LL_EXTI_InitTypeDef config;
+    config.Line_0_31 = line;
+    config.Mode = mode;
+    config.Trigger = trigger;
+    config.LineCommand = isEnabled ? ENABLE : DISABLE;
+    LL_EXTI_Init(&config);
 }
 
 void Exti::Init(InitConfig* config)
 {
-    EXTI_Init(config);
+    LL_EXTI_Init(config);
 }
 
 void Exti::GenerateIT(Config::EXTILine line)
 {
-    EXTI_GenerateSWInterrupt(static_cast<uint32_t>(line));
-}
-
-bool Exti::GetITStatus(Config::EXTILine line)
-{
-    return EXTI_GetITStatus(static_cast<uint32_t>(line)) == SET;
+    LL_EXTI_GenerateSWI_0_31(line);
 }
 
 bool Exti::GetFlagStatus(Config::EXTILine line)
 {
-    return EXTI_GetFlagStatus(static_cast<uint32_t>(line)) == SET;
-}
-
-void Exti::ClearITStatus(Config::EXTILine line)
-{
-    EXTI_ClearITPendingBit(static_cast<uint32_t>(line));
+    return LL_EXTI_IsActiveFlag_0_31(line) == SET;
 }
 
 void Exti::ClearFlagStatus(Config::EXTILine line)
 {
-    EXTI_ClearFlag(static_cast<uint32_t>(line));
+    LL_EXTI_ClearFlag_0_31(line);
 }
 
 //全局EXTI对象

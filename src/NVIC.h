@@ -7,8 +7,14 @@ SPDX-License-Identifier: GPL-3.0-only
 #ifndef __NVIC_H__
 #define __NVIC_H__
 
-#include "stm32f10x_tim.h"
+#include "stm32f1xx.h"
 
+//CortexM3优先级组定义
+#define NVIC_PRIORITYGROUP_0         0x00000007U /*!< 0位抢占优先级，4位响应优先级 */
+#define NVIC_PRIORITYGROUP_1         0x00000006U /*!< 1位抢占优先级，3位响应优先级 */
+#define NVIC_PRIORITYGROUP_2         0x00000005U /*!< 2位抢占优先级，2位响应优先级 */
+#define NVIC_PRIORITYGROUP_3         0x00000004U /*!< 3位抢占优先级，1位响应优先级 */
+#define NVIC_PRIORITYGROUP_4         0x00000003U /*!< 4位抢占优先级，0位响应优先级 */
 /// @brief NVIC对象
 ///该类提供了对stm32f10x NVIC的操作接口
 ///NVIC中断通道表请参见Nvic::Config::Channels
@@ -20,11 +26,11 @@ public:
         /// @brief NVIC的全局优先级分组
         typedef enum PriorityGroup
         {
-            Group0_4 = NVIC_PriorityGroup_0, // 0位抢占优先级，4位响应优先级
-            Group1_3 = NVIC_PriorityGroup_1, // 1位抢占优先级，3位响应优先级
-            Group2_2 = NVIC_PriorityGroup_2, // 2位抢占优先级，2位响应优先级
-            Group3_1 = NVIC_PriorityGroup_3, // 3位抢占优先级，1位响应优先级
-            Group4_0 = NVIC_PriorityGroup_4, // 4位抢占优先级，0位响应优先级
+            Group0_4 = NVIC_PRIORITYGROUP_0, // 0位抢占优先级，4位响应优先级
+            Group1_3 = NVIC_PRIORITYGROUP_1, // 1位抢占优先级，3位响应优先级
+            Group2_2 = NVIC_PRIORITYGROUP_2, // 2位抢占优先级，2位响应优先级
+            Group3_1 = NVIC_PRIORITYGROUP_3, // 3位抢占优先级，1位响应优先级
+            Group4_0 = NVIC_PRIORITYGROUP_4, // 4位抢占优先级，0位响应优先级
         } PriorityGroup;
 
         struct Channels
@@ -38,8 +44,8 @@ public:
                 FLASH_IRQn = FLASH_IRQn, //FLASH全局中断
                 RCC_IRQn = RCC_IRQn, //RCC全局中断
 
-#ifdef STM32F10X_MD
-                RTCAlarm_IRQn = RTCAlarm_IRQn,                  //RTC报警中断
+#ifdef STM32F103xB
+                RTC_Alarm_IRQn = RTC_Alarm_IRQn,                  //RTC报警中断
 #endif
             } Global;
 
@@ -50,7 +56,7 @@ public:
                 EXTI2_IRQn = EXTI2_IRQn, //外部中断2
                 EXTI3_IRQn = EXTI3_IRQn, //外部中断3
                 EXTI4_IRQn = EXTI4_IRQn, //外部中断4
-#ifdef STM32F10X_MD
+#ifdef STM32F103xB
                 EXTI9_5_IRQn = EXTI9_5_IRQn,                    //外部中断9到5
                 EXTI15_10_IRQn = EXTI15_10_IRQn,                //外部中断15到10
 #endif
@@ -58,25 +64,25 @@ public:
 
             typedef enum ADC
             {
-#ifdef STM32F10X_MD
+#ifdef STM32F103xB
                 ADC1_2_IRQn = ADC1_2_IRQn,                      //ADC1和ADC2全局中断
 #endif
             } ADC;
 
-            typedef enum USB
+            typedef enum _USB
             {
-#ifdef STM32F10X_MD
+#ifdef STM32F103xB
                 USB_HP_CAN1_TX_IRQn = USB_HP_CAN1_TX_IRQn,      //USB高优先级或CAN1 TX中断
                 USB_LP_CAN1_RX0_IRQn = USB_LP_CAN1_RX0_IRQn,    //USB低优先级或CAN1 RX0中断
                 CAN1_RX1_IRQn = CAN1_RX1_IRQn,                  //CAN1 RX1中断
                 CAN1_SCE_IRQn = CAN1_SCE_IRQn,                  //CAN1 SCE中断 
                 USBWakeUp_IRQn = USBWakeUp_IRQn                 //USB唤醒中断
 #endif 
-            } USB;
+            } _USB;
 
             typedef enum TIM
             {
-#ifdef STM32F10X_MD
+#ifdef STM32F103xB
                 TIM1_BRK_IRQn = TIM1_BRK_IRQn,                  //TIM1死区中断  
                 TIM1_UP_IRQn = TIM1_UP_IRQn,                    //TIM1更新中断
                 TIM1_TRG_COM_IRQn = TIM1_TRG_COM_IRQn,          //TIM1触发和通信中断
@@ -89,7 +95,7 @@ public:
 
             typedef enum BUS
             {
-#ifdef STM32F10X_MD
+#ifdef STM32F103xB
                 I2C1_EV_IRQn = I2C1_EV_IRQn,                    //I2C1事件中断
                 I2C1_ER_IRQn = I2C1_ER_IRQn,                    //I2C1错误中断
                 I2C2_EV_IRQn = I2C2_EV_IRQn,                    //I2C2事件中断
@@ -103,6 +109,7 @@ public:
             } BUS;
         };
 
+        /*
         typedef enum PowerMode
         {
             Normal = 0, //正常模式
@@ -110,52 +117,51 @@ public:
             Stop = NVIC_LP_SLEEPDEEP,   //停止模式
             Standby = NVIC_LP_SLEEPONEXIT, //待机模式
         } PowerMode;
+        */
     };
 
     /// @brief NVIC中断配置结构体类型定义
     /// @param NVIC_IRQChannel - 需要配置的中断通道, 位于Nvic::Config::Channels中
     /// @param NVIC_IRQChannelPreemptionPriority - 抢占优先级配置
     /// @param NVIC_IRQChannelSubPriority - 响应优先级配置
-    /// @param NVIC_IRQChannelCmd - 是否使能该通道 ENABLE或DISABLE
-    typedef NVIC_InitTypeDef NvicConfig;
+    /// @param NVIC_IRQChannelCmd - 是否使能该通道
+    typedef struct NVICInitTypeDef
+    {
+        IRQn_Type NVIC_IRQChannel;
+        uint8_t NVIC_IRQChannelPreemptionPriority;
+        uint8_t NVIC_IRQChannelSubPriority;
+        bool NVIC_IRQChannelCmd;
+    } NVICInitTypeDef;
 
     /// @brief 设置NVIC的全局优先级分组方法(不建议运行时更改)
     /// @param priorityGroup 目标优先级分组方法
     void SetPriorityGrouping(Config::PriorityGroup priorityGroup);
     /// @brief 获取一个默认的NVIC初始化结构体
     /// @return 默认的NVIC初始化结构体
-    NvicConfig GetDefaltConfig();
+    NVICInitTypeDef GetDefaultConfig();
     /// @brief 以NVIC初始化结构体操作指定的中断通道
     /// @param config NVIC初始化结构体指针, 其中NVIC_IRQChannel成员指定了需要操作的中断通道
-    void ChannelControl(NvicConfig* config);
+    void ChannelControl(NVICInitTypeDef* config);
     /// @brief 使用参数直接控制NVIC通道
     /// @param channel 要控制的通道 位于Nvic::Config::Channels中
     /// @param preemptionPriority 抢占优先级配置
     /// @param subPriority 执行优先级配置
     /// @param isEnabled 是否使能该通道
-    void ChannelControl(uint8_t channel, uint8_t preemptionPriority, uint8_t subPriority, bool isEnabled);
+    void ChannelControl(IRQn_Type channel, uint8_t preemptionPriority, uint8_t subPriority, bool isEnabled);
+
     /// @brief 控制中断向量表
     /// @param NVIC_VectTab 要设置的中断向量表
     /// @param Offset 目标函数在Rom地址中的偏移(单位为4字节,即一个指针的大小)
-    void SetVectorTable(uint32_t NVIC_VectTab, uint32_t Offset);
+    //void SetVectorTable(uint32_t NVIC_VectTab, uint32_t Offset);
+    //函数未完成,由于需要直接操作内核寄存器,暂时不实现,后续参考HAL_NVIC_SetVectorTable函数的实现来完成这个函数
+
     /// @brief 设置系统低功耗模式(睡眠模式, 停止模式或待机模式)
     /// @param isLowPower 是否要启动低功耗模式
-    void SetPowerMode(Config::PowerMode mode);
+    //void SetPowerMode(Config::PowerMode mode);
+    //函数未完成,由于需要直接操作内核寄存器,暂时不实现,后续参考HAL_PWR类的实现来完成这个函数
 };
 
 extern Nvic nvic;
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

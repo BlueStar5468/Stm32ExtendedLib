@@ -14,6 +14,13 @@ SPDX-License-Identifier: GPL-3.0-only
 /// @note 设备抽象层对象:
 /// @note TIM计时器:TIM_1, TIM_2, TIM_3, TIM_4, TIM_5, TIM_6, TIM_7, TIM_8
 /// @note NVIC中断控制器:Nvic
+/// @note EXTI外部中断控制器:exti
+/// @note GPIO通用输入输出:GpioA, GpioB, GpioC, GpioD, GpioE
+/// @note --------软件--------
+/// @note 暂无
+/// @note 
+/// @note 
+/// @note 
 /// @note 其他外设对象正在开发中,敬请期待!
 /// @note 
 class help {};
