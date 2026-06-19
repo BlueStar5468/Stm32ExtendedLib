@@ -9,9 +9,6 @@ SPDX-License-Identifier: GPL-3.0-only
 #include "Nvic.h"
 #include "Tim.h"
 
-/// @brief 切换计时器的中断使能状态
-    /// @param state - 需要切换到的状态
-    /// @param it - 需要切换状态的中断类型(默认为更新中断)
 void Tim::InterruptSwitch(bool isEnabled, Configs::ITMode it)
 {
     if (isEnabled)
@@ -80,8 +77,6 @@ void Tim::InterruptSwitch(bool isEnabled, Configs::ITMode it)
     }
 }
 
-/// @brief 切换计时器的使能状态
-    /// @param state - 需要切换到的状态
 void Tim::Switch(State state)
 {
     if (state == ENABLE)
@@ -90,8 +85,6 @@ void Tim::Switch(State state)
         LL_TIM_DisableCounter(self);
 }
 
-/// @brief 获取一个默认配置的计数器初始化结构体
-/// @return 默认的计数器初始化结构体
 Tim::TimeBaseInitConfig Tim::GetDefaultTimeBaseInitConfig()
 {
     LL_TIM_InitTypeDef defaultConfig;
@@ -99,30 +92,17 @@ Tim::TimeBaseInitConfig Tim::GetDefaultTimeBaseInitConfig()
     return defaultConfig;
 }
 
-/// @brief 恢复计时器的缺省配置
 void Tim::DeInit()
 {
     LL_TIM_DeInit(self);
 }
 
-/// @brief 初始化计时器的时基单元
-    /// @param config - 时基单元的配置结构体指针
 void Tim::TimeBaseInit(TimeBaseInitConfig* config)
 {
     LL_TIM_Init(self, config);
 }
 
-/// @brief 设置计时器的时钟模式(不含输入捕获的极性和通道以及滤波设置)
-/// @param mode - 需要设置的时钟模式
-/// @param trigger - 触发器选择(默认值为IT0, 具体查阅TimTrigger枚举，注意部分触发器可能在某些模式下无效)
-/// @note 内部时钟模式:RCC------------------->内部时钟模式 -> PSC预分频器 -> CNT计数器
-/// @note 其他定时器输入:ITRx----->选择器------>外部时钟模式1 -> PSC预分频器 -> CNT计数器
-/// @note 外部时钟模式1:GPIO------>选择器------>外部时钟模式1 -> PSC预分频器 -> CNT计数器
-/// @note TIx捕获模式(时钟1):GPIO--->选择器---->外部时钟模式1 -> PSC预分频器 -> CNT计数器
-/// @note 外部时钟模式2:GPIO------------------>外部时钟模式2 -> PSC预分频器 -> CNT计数器
-/// @note TIx捕获模式:GPIO------------------->编码器输入 -> PSC预分频器 -> CNT计数器
-/// @note TIx为外部引脚(GPIO) EXT来源于专用外部时钟引脚 而ITRx在芯片内部链接,常用于定时器级联
-void Tim::SetClockMode(Configs::TIMClockMode mode, Configs::TimTrigger trigger)
+void Tim::SetClockMode(Configs::TIMClockMode mode)
 {
     if (mode == Configs::TIMClockMode::InternalClock)
     {
@@ -131,7 +111,6 @@ void Tim::SetClockMode(Configs::TIMClockMode mode, Configs::TimTrigger trigger)
     else if (mode == Configs::TIMClockMode::ExternalClockMode1)
     {
         LL_TIM_SetClockSource(self, LL_TIM_CLOCKSOURCE_EXT_MODE1);
-        LL_TIM_SetTriggerInput(self, trigger);
     }
     else if (mode == Configs::TIMClockMode::ExternalClockMode2)
     {
@@ -139,9 +118,6 @@ void Tim::SetClockMode(Configs::TIMClockMode mode, Configs::TimTrigger trigger)
     }
 }
 
-/// @brief 设置计时器的预分频器
-/// @param prescaler 预分频器的值(必须在0x0000到0xFFFF之间)
-/// @param reloadMode 预分频器更新模式(单次有效)(默认值为Wait)
 void Tim::SetPrescaler(uint16_t prescaler, Configs::PSCReloadMode reloadMode)
 {
     LL_TIM_SetPrescaler(self, prescaler);
@@ -151,15 +127,11 @@ void Tim::SetPrescaler(uint16_t prescaler, Configs::PSCReloadMode reloadMode)
     }
 }
 
-/// @brief 设置计时器计数模式
-/// @param mode 修改的目标模式
 void Tim::SetCounterMode(Configs::CounterMode mode)
 {
     LL_TIM_SetCounterMode(self, mode);
 }
 
-/// @brief 使能或失能ARR预装载(是否启用ARR的影子寄存器)
-/// @param state 需要设置的状态
 void Tim::ARReloadConfig(State state)
 {
     if (state == ENABLE)
@@ -172,45 +144,31 @@ void Tim::ARReloadConfig(State state)
     }
 }
 
-/// @brief 很简单的函数 给计数器设置一个值
-/// @param counter 要设置的值(必须在0x0000到0xFFFF之间)
 void Tim::SetCounter(uint16_t counter)
 {
     LL_TIM_SetCounter(self, counter);
 }
 
-/// @brief 给ARR设置一个值(注意ARR预装载的状态会影响这个函数的生效时机)
-/// @param autoReload 要设置的值(必须在0x0000到0xFFFF之间) 
-/// @note 如果想设置ARR预装载 请使用ARReloadConfig(State)函数
 void Tim::SetAutoReload(uint16_t autoReload)
 {
     LL_TIM_SetAutoReload(self, autoReload);
 }
 
-/// @brief 获取计数器当前的值
-/// @return 16位计数器的值
 uint16_t Tim::GetCounter()
 {
     return LL_TIM_GetCounter(self);
 }
 
-/// @brief 获取当前预分频器的值
-/// @return 预分频器的值
 uint16_t Tim::GetPrescaler()
 {
     return LL_TIM_GetPrescaler(self);
 }
 
-/// @brief 获取当前ARR的值 
-/// @return 当前ARR寄存器的值
 uint16_t Tim::GetAutoReload()
 {
     return LL_TIM_GetAutoReload(self);
 }
 
-/// @brief 获取指定的标志位的状态
-/// @param flag 要获取的标志位
-/// @return 标志位的状态
 bool Tim::GetFlagStatus(Configs::Flags flag)
 {
     bool ret;
@@ -246,8 +204,6 @@ bool Tim::GetFlagStatus(Configs::Flags flag)
     return ret;
 }
 
-/// @brief 清除指定的标志位
-/// @param flag 要清除的标志位
 void Tim::ClearFlag(Configs::Flags flag)
 {
     switch (flag)
@@ -280,9 +236,6 @@ void Tim::ClearFlag(Configs::Flags flag)
     }
 }
 
-/// @brief 使能或失能计时器的外设时钟
-/// @param state 需要设置的状态
-/// @note 也可以使用RCC控制时钟,函数等效。
 void Tim::PeripheralClockControl(State state)
 {
     //TIM1和TIM8属于高级定时器 挂载于APB2总线
@@ -353,9 +306,21 @@ void Tim::PeripheralClockControl(State state)
     }
 }
 
-/// @brief 你是否因为繁杂的计时器配置而感到抓狂? 这个函数为你量身定做! 你只需要输入时间长度,他就会自动配置好计时器和中断!
-/// @param seconds 计时器触发时间的长度(单位为秒,必须在0x0000到0xFFFF之间)
-/// @note 记得写中断函数哦 如果不写会调到默认中断里死循环的!
+void Tim::SelectSubModeTrigger(Tim::Configs::TimTrigger trigger)
+{
+    LL_TIM_SetTriggerInput(self, trigger);
+}
+
+void Tim::SelectMainModeOutputTrigger(Configs::InternalTrigger trigger)
+{
+    LL_TIM_SetTriggerOutput(self, trigger);
+}
+
+void Tim::SelectSubMode(Tim::Configs::SlaveMode mode)
+{
+    LL_TIM_SetSlaveMode(self, mode);
+}
+
 void Tim::OneClickToStart(uint16_t seconds)
 {
     Tim tim = *this;
@@ -421,15 +386,6 @@ void Tim::OneClickToStart(uint16_t seconds)
     tim.Switch(Tim::State::ENABLE); //启动TIM2
 }
 
-/// @brief 通过参数初始化OC通道
-/// @param Pluse CCR寄存器的值(必须在0x0000到0xFFFF之间)
-/// @param Polarity 正向通道输出 true高电平 false低电平
-/// @param NPolarity 反向通道输出(仅高级定时器支持) true高电平 false低电平
-/// @param mode OC的模式
-/// @param isEnabled 是否启用正向通道
-/// @param isNEnabled 是否启用反向通道(仅高级定时器支持)
-/// @param channel 要初始化的OC通道(每个定时器有4个1-4,只能同时选择一个,输入0代表全部通道)
-/// @note 以上配置不一定对所有定时器都适用,请根据实际情况调整参数以避免不可预期的行为
 void Tim::OutputCompare::Init(uint16_t Pluse, bool Polarity, bool NPolarity, OCMode mode, bool isEnabled, bool isNEnabled, uint8_t channel)
 {
     //获取默认的配置
@@ -459,11 +415,6 @@ void Tim::OutputCompare::Init(uint16_t Pluse, bool Polarity, bool NPolarity, OCM
     }
 }
 
-/// @brief 通过初始化结构体初始化OC通道
-/// @param config 初始化结构体
-/// @param channel 需要初始化的通道(1-4)
-/// @note 在使用高级定时器时,确保config结构体的所有函数均有值,否则可能会导致不可预期的行为
-/// @note 不推荐自建结构体,可使用函数GetDefaultOCInitConfig()获取一个默认配置的结构体,然后修改其中的成员来满足需求
 void Tim::OutputCompare::Init(InitConfig* config, uint8_t channel)
 {
     switch (channel)
@@ -476,9 +427,57 @@ void Tim::OutputCompare::Init(InitConfig* config, uint8_t channel)
     }
 }
 
-/// @brief 是否启用OCR寄存器的预装载(是否启用OCR的影子寄存器)
-/// @param isEnabled true启用 false失能
-void Tim::OutputCompare::PreloadConfig(uint8_t channel, bool isEnabled)
+void Tim::OutputCompare::EnableCCChannelOutput(uint8_t channel, bool isEnabled)
+{
+    if (isEnabled)
+    {
+        switch (channel)
+        {
+        case 1: LL_TIM_CC_EnableChannel(self, LL_TIM_CHANNEL_CH1); break;
+        case 2: LL_TIM_CC_EnableChannel(self, LL_TIM_CHANNEL_CH2); break;
+        case 3: LL_TIM_CC_EnableChannel(self, LL_TIM_CHANNEL_CH3); break;
+        case 4: LL_TIM_CC_EnableChannel(self, LL_TIM_CHANNEL_CH4); break;
+        default: return;
+        }
+    }
+    else
+    {
+        switch (channel)
+        {
+        case 1: LL_TIM_CC_DisableChannel(self, LL_TIM_CHANNEL_CH1); break;
+        case 2: LL_TIM_CC_DisableChannel(self, LL_TIM_CHANNEL_CH2); break;
+        case 3: LL_TIM_CC_DisableChannel(self, LL_TIM_CHANNEL_CH3); break;
+        case 4: LL_TIM_CC_DisableChannel(self, LL_TIM_CHANNEL_CH4); break;
+        default: return;
+        }
+    }
+}
+
+void Tim::OutputCompare::EnableCCNChannelOutput(uint8_t channel, bool isEnabled)
+{
+    if (isEnabled)
+    {
+        switch (channel)
+        {
+        case 1: LL_TIM_CC_EnableChannel(self, LL_TIM_CHANNEL_CH1N); break;
+        case 2: LL_TIM_CC_EnableChannel(self, LL_TIM_CHANNEL_CH2N); break;
+        case 3: LL_TIM_CC_EnableChannel(self, LL_TIM_CHANNEL_CH3N); break;
+        default: return;
+        }
+    }
+    else
+    {
+        switch (channel)
+        {
+        case 1: LL_TIM_CC_DisableChannel(self, LL_TIM_CHANNEL_CH1N); break;
+        case 2: LL_TIM_CC_DisableChannel(self, LL_TIM_CHANNEL_CH2N); break;
+        case 3: LL_TIM_CC_DisableChannel(self, LL_TIM_CHANNEL_CH3N); break;
+        default: return;
+        }
+    }
+}
+
+void Tim::OutputCompare::CCRPreloadConfig(uint8_t channel, bool isEnabled)
 {
     if (isEnabled)
     {
@@ -504,9 +503,6 @@ void Tim::OutputCompare::PreloadConfig(uint8_t channel, bool isEnabled)
     }
 }
 
-/// @brief 设置通道的输出极性
-/// @param channel 要设置的通道(1-4)
-/// @param polarity 输出极性 true高电平 false低电平
 void Tim::OutputCompare::SetOutputPolarity(uint8_t channel, bool polarity)
 {
     switch (channel)
@@ -519,24 +515,17 @@ void Tim::OutputCompare::SetOutputPolarity(uint8_t channel, bool polarity)
     }
 }
 
-
-/// @brief 设置反向通道的输出极性
-/// @param channel 要设置的通道(1-3) 反向通道只有1-3有 4没有
-/// @param isToggled 是否反转输出极性 true反转 false不反转
-void Tim::OutputCompare::SetNOutputPolarity(uint8_t channel, bool isToggled)
+void Tim::OutputCompare::SetNOutputPolarity(uint8_t channel, bool polarity)
 {
     switch (channel)
     {
-    case 1: LL_TIM_OC_SetPolarity(self, LL_TIM_CHANNEL_CH1N, (isToggled) ? LL_TIM_OCPOLARITY_LOW : LL_TIM_OCPOLARITY_HIGH); break;
-    case 2: LL_TIM_OC_SetPolarity(self, LL_TIM_CHANNEL_CH2N, (isToggled) ? LL_TIM_OCPOLARITY_LOW : LL_TIM_OCPOLARITY_HIGH); break;
-    case 3: LL_TIM_OC_SetPolarity(self, LL_TIM_CHANNEL_CH3N, (isToggled) ? LL_TIM_OCPOLARITY_LOW : LL_TIM_OCPOLARITY_HIGH); break;
+    case 1: LL_TIM_OC_SetPolarity(self, LL_TIM_CHANNEL_CH1N, (polarity) ? LL_TIM_OCPOLARITY_HIGH : LL_TIM_OCPOLARITY_LOW); break;
+    case 2: LL_TIM_OC_SetPolarity(self, LL_TIM_CHANNEL_CH2N, (polarity) ? LL_TIM_OCPOLARITY_HIGH : LL_TIM_OCPOLARITY_LOW); break;
+    case 3: LL_TIM_OC_SetPolarity(self, LL_TIM_CHANNEL_CH3N, (polarity) ? LL_TIM_OCPOLARITY_HIGH : LL_TIM_OCPOLARITY_LOW); break;
     default: return;
     }
 }
 
-/// @brief 设置目标通道的输出比较是否启用
-/// @param channel 目标通道
-/// @param isEnabled 是否启用输出比较 true使能 false失能
 void Tim::OutputCompare::SetOutputState(uint8_t channel, bool isEnabled)
 {
 #if defined(TIM6)
@@ -569,9 +558,6 @@ void Tim::OutputCompare::SetOutputState(uint8_t channel, bool isEnabled)
     }
 }
 
-/// @brief 设置目标通道的反向输出比较是否启用
-/// @param channel 目标通道
-/// @param isEnabled 是否启用输出比较 true使能 false失能
 void Tim::OutputCompare::SetNOutputState(uint8_t channel, bool isEnabled)
 {
 #if defined(TIM6)
@@ -602,10 +588,6 @@ void Tim::OutputCompare::SetNOutputState(uint8_t channel, bool isEnabled)
     }
 }
 
-/// @brief 启用高级定时器的PWM输出(通用定时器不需要设置PWM输出功能,默认开启PWM输出)
-/// @param isEnabled 是否启用PWM输出 true启用 false失能
-/// @note 只有TIM1和TIM8需要调用这个函数来启用PWM输出,其他定时器不需要设置PWM输出功能
-/// @note 高级定时器:TIM1和TIM8 | TIM 15 16 17(本库不支持)
 void Tim::OutputCompare::EnablePWMOutput(bool isEnabled)
 {
     //只有TIM1和TIM8需要调用这个函数来启用PWM输出,其他定时器不需要设置PWM输出功能
@@ -619,9 +601,6 @@ void Tim::OutputCompare::EnablePWMOutput(bool isEnabled)
     }
 }
 
-/// @brief 用于设置输出比较模式的函数
-/// @param channel 要设置的通道
-/// @param mode 目标模式
 void Tim::OutputCompare::SetOCMode(uint8_t channel, OCMode mode)
 {
     switch (channel)
@@ -634,10 +613,6 @@ void Tim::OutputCompare::SetOCMode(uint8_t channel, OCMode mode)
     }
 }
 
-/// @brief 设置CCR寄存器的值 从而改变PWM的占空比或输出比较的比较值
-/// @param channel 要设置的通道
-/// @param ccr CCR寄存器的值(必须在0x0000到0xFFFF之间)
-/// @note 对TIM6和TIM7无效 因为基本定时器没有输出比较功能
 void Tim::OutputCompare::SetCCR(uint8_t channel, uint16_t ccr)
 {
 #if defined(TIM6)
@@ -656,8 +631,6 @@ void Tim::OutputCompare::SetCCR(uint8_t channel, uint16_t ccr)
     }
 }
 
-/// @brief 获取一个默认配置的输出比较初始化结构体
-/// @return 默认配置的输出比较初始化结构体
 Tim::OutputCompare::InitConfig Tim::OutputCompare::GetDefaultInitConfig()
 {
     InitConfig config;
@@ -665,19 +638,188 @@ Tim::OutputCompare::InitConfig Tim::OutputCompare::GetDefaultInitConfig()
     return config;
 }
 
-Tim TIM_1(TIM1); //APB2 高级定时器
-Tim TIM_2(TIM2); //APB1 通用定时器
-Tim TIM_3(TIM3); //APB1 通用定时器
-Tim TIM_4(TIM4); //APB1 通用定时器
+Tim::InputCapture::InitConfig Tim::InputCapture::GetDefaultInitConfig()
+{
+    InitConfig config;
+    LL_TIM_IC_StructInit(&config);
+    return config;
+}
+
+void Tim::InputCapture::Init(Tim::InputCapture::InitConfig* config, uint8_t channel)
+{
+    switch (channel)
+    {
+    case 0:
+        LL_TIM_IC_Init(self, LL_TIM_CHANNEL_CH1, config);
+        LL_TIM_IC_Init(self, LL_TIM_CHANNEL_CH2, config);
+        LL_TIM_IC_Init(self, LL_TIM_CHANNEL_CH3, config);
+        LL_TIM_IC_Init(self, LL_TIM_CHANNEL_CH4, config);
+        break;
+    case 1: LL_TIM_IC_Init(self, LL_TIM_CHANNEL_CH1, config); break;
+    case 2: LL_TIM_IC_Init(self, LL_TIM_CHANNEL_CH2, config); break;
+    case 3: LL_TIM_IC_Init(self, LL_TIM_CHANNEL_CH3, config); break;
+    case 4: LL_TIM_IC_Init(self, LL_TIM_CHANNEL_CH4, config); break;
+    default: return;
+    }
+}
+
+void Tim::InputCapture::Init(ICPolarity polarity, ICActiveInput activeInput, ICPrescaler prescaler, ICFilter filter, uint8_t channel)
+{
+    Tim::InputCapture::InitConfig config;
+    config = GetDefaultInitConfig();
+
+    config.ICPolarity = polarity;
+    config.ICActiveInput = activeInput;
+    config.ICPrescaler = prescaler;
+    config.ICFilter = filter;
+
+    switch (channel)
+    {
+    case 0:
+        LL_TIM_IC_Init(self, LL_TIM_CHANNEL_CH1, &config);
+        LL_TIM_IC_Init(self, LL_TIM_CHANNEL_CH2, &config);
+        LL_TIM_IC_Init(self, LL_TIM_CHANNEL_CH3, &config);
+        LL_TIM_IC_Init(self, LL_TIM_CHANNEL_CH4, &config);
+        break;
+    case 1: LL_TIM_IC_Init(self, LL_TIM_CHANNEL_CH1, &config); break;
+    case 2: LL_TIM_IC_Init(self, LL_TIM_CHANNEL_CH2, &config); break;
+    case 3: LL_TIM_IC_Init(self, LL_TIM_CHANNEL_CH3, &config); break;
+    case 4: LL_TIM_IC_Init(self, LL_TIM_CHANNEL_CH4, &config); break;
+    default: return;
+    }
+}
+
+void Tim::InputCapture::SetICActiveInput(uint8_t channel, Tim::InputCapture::ICActiveInput activeInput)
+{
+    switch (channel)
+    {
+    case 1: LL_TIM_IC_SetActiveInput(self, LL_TIM_CHANNEL_CH1, activeInput); break;
+    case 2: LL_TIM_IC_SetActiveInput(self, LL_TIM_CHANNEL_CH2, activeInput); break;
+    case 3: LL_TIM_IC_SetActiveInput(self, LL_TIM_CHANNEL_CH3, activeInput); break;
+    case 4: LL_TIM_IC_SetActiveInput(self, LL_TIM_CHANNEL_CH4, activeInput); break;
+    default: return;
+    }
+}
+
+void Tim::InputCapture::SetICFilter(uint8_t channel, Tim::InputCapture::ICFilter filter)
+{
+    switch (channel)
+    {
+    case 1: LL_TIM_IC_SetFilter(self, LL_TIM_CHANNEL_CH1, filter); break;
+    case 2: LL_TIM_IC_SetFilter(self, LL_TIM_CHANNEL_CH2, filter); break;
+    case 3: LL_TIM_IC_SetFilter(self, LL_TIM_CHANNEL_CH3, filter); break;
+    case 4: LL_TIM_IC_SetFilter(self, LL_TIM_CHANNEL_CH4, filter); break;
+    default: return;
+    }
+}
+
+void Tim::InputCapture::SetICPolarity(uint8_t channel, Tim::InputCapture::ICPolarity polarity)
+{
+    switch (channel)
+    {
+    case 1: LL_TIM_IC_SetPolarity(self, LL_TIM_CHANNEL_CH1, polarity); break;
+    case 2: LL_TIM_IC_SetPolarity(self, LL_TIM_CHANNEL_CH2, polarity); break;
+    case 3: LL_TIM_IC_SetPolarity(self, LL_TIM_CHANNEL_CH3, polarity); break;
+    case 4: LL_TIM_IC_SetPolarity(self, LL_TIM_CHANNEL_CH4, polarity); break;
+    default: return;
+    }
+}
+
+void Tim::InputCapture::SetICPrescaler(uint8_t channel, Tim::InputCapture::ICPrescaler prescaler)
+{
+    switch (channel)
+    {
+    case 1: LL_TIM_IC_SetPrescaler(self, LL_TIM_CHANNEL_CH1, prescaler); break;
+    case 2: LL_TIM_IC_SetPrescaler(self, LL_TIM_CHANNEL_CH2, prescaler); break;
+    case 3: LL_TIM_IC_SetPrescaler(self, LL_TIM_CHANNEL_CH3, prescaler); break;
+    case 4: LL_TIM_IC_SetPrescaler(self, LL_TIM_CHANNEL_CH4, prescaler); break;
+    default: return;
+    }
+}
+
+uint32_t Tim::InputCapture::GetCaptureValue(uint8_t channel)
+{
+    switch (channel)
+    {
+    case 1: return LL_TIM_IC_GetCaptureCH1(self);
+    case 2: return LL_TIM_IC_GetCaptureCH2(self);
+    case 3: return LL_TIM_IC_GetCaptureCH3(self);
+    case 4: return LL_TIM_IC_GetCaptureCH4(self);
+    default: return 0;
+    }
+}
+
+void Tim::InputCapture::InitPWMI(ICPolarity polarity, ICPrescaler prescaler, ICFilter filter, PWMIGroup group)
+{
+    switch (group)
+    {
+    case PWMIGroup::Group1Target1:
+        this->Init((polarity == ICPolarity::Rising) ? ICPolarity::Rising : ICPolarity::Falling,
+                    ICActiveInput::Direct,
+                    prescaler,
+                    filter,
+                    1);
+        this->Init((polarity == ICPolarity::Rising) ? ICPolarity::Falling : ICPolarity::Rising,
+                    ICActiveInput::InDirect,
+                    prescaler,
+                    filter,
+                    2);
+        break;
+    case PWMIGroup::Group1Target2:
+        this->Init((polarity == ICPolarity::Rising) ? ICPolarity::Rising : ICPolarity::Falling,
+                    ICActiveInput::InDirect,
+                    prescaler,
+                    filter,
+                    1);
+        this->Init((polarity == ICPolarity::Rising) ? ICPolarity::Falling : ICPolarity::Rising,
+                    ICActiveInput::Direct,
+                    prescaler,
+                    filter,
+                    2);
+        break;
+    case PWMIGroup::Group2Target1:
+        this->Init((polarity == ICPolarity::Rising) ? ICPolarity::Rising : ICPolarity::Falling,
+                    ICActiveInput::Direct,
+                    prescaler,
+                    filter,
+                    3);
+        this->Init((polarity == ICPolarity::Rising) ? ICPolarity::Falling : ICPolarity::Rising,
+                    ICActiveInput::InDirect,
+                    prescaler,
+                    filter,
+                    4);
+        break;
+    case PWMIGroup::Group2Target2:
+        this->Init((polarity == ICPolarity::Rising) ? ICPolarity::Rising : ICPolarity::Falling,
+                    ICActiveInput::InDirect,
+                    prescaler,
+                    filter,
+                    3);
+        this->Init((polarity == ICPolarity::Rising) ? ICPolarity::Falling : ICPolarity::Rising,
+                    ICActiveInput::Direct,
+                    prescaler,
+                    filter,
+                    4);
+        break;
+    }
+}
+
+
+
+
+Tim tim1(TIM1); //APB2 高级定时器
+Tim tim2(TIM2); //APB1 通用定时器
+Tim tim3(TIM3); //APB1 通用定时器
+Tim tim4(TIM4); //APB1 通用定时器
 #if defined(TIM5)
-Tim TIM_5(TIM5); //APB1 通用定时器
+Tim tim5(TIM5); //APB1 通用定时器
 #endif
 #if defined(TIM6)
-Tim TIM_6(TIM6); //APB1 基本定时器
+Tim tim6(TIM6); //APB1 基本定时器
 #endif
 #if defined(TIM7)
-Tim TIM_7(TIM7); //APB1 基本定时器
+Tim tim7(TIM7); //APB1 基本定时器
 #endif
 #if defined(TIM8)
-Tim TIM_8(TIM8); //APB2 高级定时器
+Tim tim8(TIM8); //APB2 高级定时器
 #endif

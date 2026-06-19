@@ -38,6 +38,8 @@ public:
             } Mode;
         };
 
+        /// @note 若要使用复用功能,请选择Alt开头的复用模式
+        /// @note 复用模式的具体链接请参考引脚定义,在启用remap后复用功能可能发生变化,未启用时为默认复用功能
         struct Out
         {
             typedef enum Mode

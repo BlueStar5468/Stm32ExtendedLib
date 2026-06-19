@@ -9,12 +9,24 @@ SPDX-License-Identifier: GPL-3.0-only
 
 #include "stm32f1xx.h"
 
+// <!------------------------- NVIC相关定义 ------------------->
+// |注：不同系列的MCU使用的Cortex内核不同,NVIC定义在Cortex内部核的头文件中,因此不同系列的MCU可能会有不同的NVIC定义
+// |
+// |------------------------- NVIC相关定义 ------------------->
+
+#if defined(STM32F1) //STM32F1系列使用Cortex-M3内核
 //CortexM3优先级组定义
 #define NVIC_PRIORITYGROUP_0         0x00000007U /*!< 0位抢占优先级，4位响应优先级 */
 #define NVIC_PRIORITYGROUP_1         0x00000006U /*!< 1位抢占优先级，3位响应优先级 */
 #define NVIC_PRIORITYGROUP_2         0x00000005U /*!< 2位抢占优先级，2位响应优先级 */
 #define NVIC_PRIORITYGROUP_3         0x00000004U /*!< 3位抢占优先级，1位响应优先级 */
 #define NVIC_PRIORITYGROUP_4         0x00000003U /*!< 4位抢占优先级，0位响应优先级 */
+
+
+#endif
+
+
+
 /// @brief NVIC对象
 ///该类提供了对stm32f10x NVIC的操作接口
 ///NVIC中断通道表请参见Nvic::Config::Channels
