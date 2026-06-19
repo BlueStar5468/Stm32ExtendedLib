@@ -3,9 +3,7 @@ A simple lib to encrease the Readability of Stm32 Lib.Write in cpp.
 
 # Target
 项目已更新至基于LowLayer库构建，编译请使用ARMClang v6。
-
-# Attention
-项目预计向更新的LL库迁移并完全移除标准库依赖，目前版本暂时弃用。
+项目现在不内置库文件，请前往STM官网下载相关文件.
 
 # 许可证
 本项目包含以下组件：
